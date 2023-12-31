@@ -1,5 +1,5 @@
 from .base import Base
-from sqlalchemy import Column, UUID, String, Integer, Boolean, DateTime
+from sqlalchemy import Column, UUID, String, Integer, Boolean, DateTime, BigInteger
 import uuid
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -10,7 +10,7 @@ class User(Base):
     __tablename__ = "users"
 
     user_id = Column(UUID, primary_key=True, default=uuid.uuid4)
-    tg_user_id = Column(Integer, unique=True)
+    tg_user_id = Column(BigInteger, unique=True)
 
     username = Column(String(255), unique=True, nullable=True)
     first_name = Column(String(255), nullable=True)
