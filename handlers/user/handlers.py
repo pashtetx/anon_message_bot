@@ -35,7 +35,11 @@ async def start_deep_link(message: Message, command: CommandStart, user: User, s
     reciever_user_id = decode_payload(args)
     logging.info("Getting reciever user...")
     reciever_user = get_user(session=session, user_id=reciever_user_id)
-        
+    
+    if reciever_user:
+        logging.info(f"User doesn't exist. user_id={reciever_user}")
+        return await message.answer("❌ Ссылка недействительна.")
+
     if reciever_user.user_id == user.user_id:
         logging.info("User try send message yourself.")
         return await message.answer("❌ Вы не можете отправить сообщение самому себе. ")
