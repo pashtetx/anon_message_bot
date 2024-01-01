@@ -1,4 +1,4 @@
-from .setup_admin_handlers import register_admin_handlers
+from .handlers import register_admin_handlers
 
 
 __all__ = [

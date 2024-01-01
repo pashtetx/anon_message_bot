@@ -1,9 +1,11 @@
 from .base import Base
-from sqlalchemy import Column, UUID, String, Integer, Boolean, DateTime, BigInteger
+from sqlalchemy import Column, UUID, String, Integer, Boolean, DateTime, BigInteger, JSON
 import uuid
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Any, Optional
 import logging
+import random
+
 
 class User(Base):
 
@@ -16,9 +18,15 @@ class User(Base):
     first_name = Column(String(255), nullable=True)
     last_name = Column(String(255), nullable=True)
 
-    subscribed = Column(Boolean, default=False)
-    expire_in = Column(DateTime, nullable=True)
+    fake_username = Column(String(25), unique=True, nullable=True)
 
+    is_admin = Column(Boolean, default=False)
+
+    def __init__(self, **kw: Any):
+
+        self.fake_username = "".join([random.choice("1234567890") for i in range(10)])
+
+        super().__init__(**kw)
 
 def get_user_or_create(session: Session, tg_user_id: int, **kwargs) -> User:
     logging.info("Searching user...")
@@ -35,3 +43,6 @@ def get_user_or_create(session: Session, tg_user_id: int, **kwargs) -> User:
 
 def get_user(session: Session, user_id: UUID):
     return session.query(User).filter_by(user_id=user_id).first()
+
+def get_random_user(session: Session, current_user: User):
+    return random.choice(session.query(User).filter(User.user_id != current_user.user_id).all())
