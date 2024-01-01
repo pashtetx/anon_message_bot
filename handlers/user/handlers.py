@@ -24,7 +24,7 @@ class SendMessageState(StatesGroup):
     message_text = State()
 
 async def get_link(message: Message, bot: Bot, user: User):
-    link = await create_start_link(bot, str(user.user_id), encode=True)
+    link = await create_start_link(bot, str(user.tg_user_id), encode=True)
     await message.answer(f"🔗 Ваша ссылка: <code>{link}</code>", parse_mode="HTML")
 
 async def start(message: Message, bot: Bot, user: User):
@@ -38,7 +38,7 @@ async def start_deep_link(message: Message, command: CommandStart, user: User, s
     args = command.args
     receiver_user_id = decode_payload(args)
     logging.info("Getting reciever user...")
-    receiver_user = get_user(session=session, user_id=receiver_user_id)
+    receiver_user = get_user(session=session, tg_user_id=receiver_user_id)
     
     if not receiver_user:
         logging.info(f"User doesn't exist. user_id={receiver_user}")

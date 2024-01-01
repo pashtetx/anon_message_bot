@@ -41,8 +41,8 @@ def get_user_or_create(session: Session, tg_user_id: int, **kwargs) -> User:
     logging.info("User finded!")
     return user
 
-def get_user(session: Session, user_id: UUID):
-    return session.query(User).filter_by(user_id=user_id).first()
+def get_user(session: Session, **kwargs):
+    return session.query(User).filter_by(**kwargs).first()
 
 def get_random_user(session: Session, current_user: User):
     return random.choice(session.query(User).filter(User.user_id != current_user.user_id).all())
