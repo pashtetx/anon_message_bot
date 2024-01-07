@@ -69,7 +69,7 @@ async def random(message: Message, user: User, session: Session, state: FSMConte
         "receiver_user": receiver_user,
     })
 
-    await message.answer("Введите сообщение чтобы отправить его рандому:")
+    await message.answer("Введите сообщение чтобы отправить его рандому:", reply_markup=cancel_keyboard())
 
 
 async def answer_message(callback: CallbackQuery, callback_data: AnswerCallbackData, state: FSMContext, session: Session):
