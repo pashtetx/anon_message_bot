@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import Any, Optional
 import logging
 import random
-
+from typing import List
 
 class User(Base):
 
@@ -27,6 +27,14 @@ class User(Base):
         self.fake_username = "".join([random.choice("1234567890") for i in range(10)])
 
         super().__init__(**kw)
+    
+    def save(self, session: Session):
+        session.add(self)
+        session.commit()
+        session.flush()
+
+def get_users(session: Session, **kwargs) -> List[User]:
+    return session.query(User).filter_by(**kwargs).all()
 
 def get_user_or_create(session: Session, tg_user_id: int, **kwargs) -> User:
     logging.info("Searching user...")
@@ -43,6 +51,11 @@ def get_user_or_create(session: Session, tg_user_id: int, **kwargs) -> User:
 
 def get_user(session: Session, **kwargs):
     return session.query(User).filter_by(**kwargs).first()
+
+def delete_user(session: Session, user: User):
+    session.delete(user)
+    session.commit()
+    session.flush()
 
 def get_random_user(session: Session, current_user: User):
     return random.choice(session.query(User).filter(User.user_id != current_user.user_id).all())

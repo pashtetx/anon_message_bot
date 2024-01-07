@@ -16,8 +16,11 @@ from db.models.user import get_user_or_create, User, get_user, get_random_user
 from db.models.message import get_message_by_id, Message
 
 from utils.prepare_content import prepare_response_text, prepare_start_text
-from filters.user_filter import AnswerCallbackData
+from filters.user_filter import AnswerCallbackData, Cancel, GetWhoIsCallbackData, Agree
 from sqlalchemy.exc import IntegrityError
+
+
+from keyboard.inline_kb import cancel_keyboard, agree_keyboard
 
 
 class SendMessageState(StatesGroup):
@@ -52,7 +55,7 @@ async def start_deep_link(message: Message, command: CommandStart, user: User, s
 
     logging.info(f"Got reciever user - {receiver_user.username} ({receiver_user.user_id})")
 
-    await message.answer(f"Введите сообщение чтобы отправить его @{receiver_user.username}: ")
+    await message.answer(f"Введите сообщение чтобы отправить его @{receiver_user.username}: ", reply_markup=cancel_keyboard())
     await state.set_state(SendMessageState.message_text)
     
     logging.info("Deep link successfully ended!")
@@ -78,7 +81,7 @@ async def answer_message(callback: CallbackQuery, callback_data: AnswerCallbackD
     })
 
     await state.set_state(SendMessageState.message_text)
-    await callback.message.answer("Отправьте сообщение чтобы ответить: ")
+    await callback.message.answer("Отправьте сообщение чтобы ответить: ", reply_markup=cancel_keyboard())
     await callback.answer()
 
 async def change_fake_username(message: Message, user: User, session: Session, command: Command):
@@ -142,11 +145,35 @@ async def get_message_to_send(message: Message, user: User, session: Session, st
     await state.clear()
 
 
+async def cancel_callbackquery(callback: CallbackQuery, callback_data: str, state: FSMContext):
+    await state.clear()
+    await callback.answer()
+    await callback.message.delete()
+
+
+async def whois_callbackquery(callback: CallbackQuery, callback_data: GetWhoIsCallbackData, session: Session, bot: Bot):
+    await callback.message.answer("✅ Сообщение отправлено. Если пользователь примет предложение, то вам придет его юзернейм, и он увидит ваш юзернейм!")
+    message = get_message_by_id(session=session, message_id=callback_data.message_id)
+    await bot.send_message(chat_id=message.sender.tg_user_id, text="От пользователя пришло предложение расскрыть юзернейм. <b>Вы согласны?</b>",
+                           reply_markup=agree_keyboard(message.message_id), parse_mode="HTML")
+    await callback.answer()
+
+async def agree_callbackquery(callback: CallbackQuery, callback_data: Agree, session: Session, bot: Bot):
+    message = get_message_by_id(session=session, message_id=callback_data.message_id)
+
+    await bot.send_message(chat_id=message.receiver.tg_user_id, text=f"{message.sender.fake_username} это @{message.sender.username}")
+    await bot.send_message(chat_id=message.sender.tg_user_id, text=f"{message.receiver.fake_username} это @{message.receiver.username}")
+
+    await callback.answer()
+
 def register_user_handlers(router: Router):
     router.message.register(start_deep_link, CommandStart(deep_link=True))
     router.message.register(start, CommandStart())
     router.message.register(get_link, Command("link"))
     router.message.register(get_message_to_send, SendMessageState.message_text)
     router.message.register(random, Command("random"))
+    router.callback_query.register(cancel_callbackquery, Cancel.filter())
     router.callback_query.register(answer_message, AnswerCallbackData.filter())
+    router.callback_query.register(whois_callbackquery, GetWhoIsCallbackData.filter())
+    router.callback_query.register(agree_callbackquery, Agree.filter())
     router.message.register(change_fake_username, Command("username"))

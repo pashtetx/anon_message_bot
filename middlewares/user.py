@@ -25,6 +25,17 @@ class UserMiddleware(BaseMiddleware):
                 last_name=last_name
             )
         
+        if user.username != username:
+            user.username = username
+            user.save(session=session)
+        if user.first_name != first_name:
+            user.first_name = first_name
+            user.save(session=session)
+        if user.last_name != last_name:
+            user.last_name = last_name
+            user.save(session=session)
+    
+
         data["user"] = user
 
         logging.info("UserMiddleware successfully finded or create user!")

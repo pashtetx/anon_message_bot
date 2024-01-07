@@ -15,7 +15,7 @@ def register_routers(dp: Dispatcher):
     admin_router = Router(name="Admin Router")
     register_admin_handlers(router=admin_router)
 
-    dp.include_router(user_router)
     dp.include_router(admin_router)
+    dp.include_router(user_router)
 
     logging.info("Successfully register routers...")
