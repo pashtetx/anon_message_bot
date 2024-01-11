@@ -20,7 +20,7 @@ from filters.user_filter import AnswerCallbackData, Cancel, GetWhoIsCallbackData
 from sqlalchemy.exc import IntegrityError
 
 
-from keyboard.inline_kb import cancel_keyboard, agree_keyboard
+from keyboard.inline_kb import cancel_keyboard, agree_keyboard, answer_keyboard
 
 
 class SendMessageState(StatesGroup):
@@ -55,7 +55,7 @@ async def start_deep_link(message: Message, command: CommandStart, user: User, s
 
     logging.info(f"Got reciever user - {receiver_user.username} ({receiver_user.user_id})")
 
-    await message.answer(f"Введите сообщение чтобы отправить его @{receiver_user.username}: ", reply_markup=cancel_keyboard())
+    await message.answer(f"Введите сообщение чтобы отправить его получателю: ", reply_markup=cancel_keyboard())
     await state.set_state(SendMessageState.message_text)
     
     logging.info("Deep link successfully ended!")
@@ -156,6 +156,15 @@ async def whois_callbackquery(callback: CallbackQuery, callback_data: GetWhoIsCa
     message = get_message_by_id(session=session, message_id=callback_data.message_id)
     await bot.send_message(chat_id=message.sender.tg_user_id, text="От пользователя пришло предложение расскрыть юзернейм. <b>Вы согласны?</b>",
                            reply_markup=agree_keyboard(message.message_id), parse_mode="HTML")
+    
+    text = prepare_response_text(message.text, message.sender, message.receiver.is_admin)
+
+    await callback.message.edit_text(
+        text=text,
+        reply_markup=answer_keyboard(message_id=message.message_id, whois=False),
+        parse_mode="HTML",
+    )
+    
     await callback.answer()
 
 async def agree_callbackquery(callback: CallbackQuery, callback_data: Agree, session: Session, bot: Bot):
@@ -165,6 +174,8 @@ async def agree_callbackquery(callback: CallbackQuery, callback_data: Agree, ses
     await bot.send_message(chat_id=message.sender.tg_user_id, text=f"{message.receiver.fake_username} это @{message.receiver.username}")
 
     await callback.answer()
+    await callback.message.delete()
+
 
 def register_user_handlers(router: Router):
     router.message.register(start_deep_link, CommandStart(deep_link=True))
