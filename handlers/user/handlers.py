@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from aiogram.utils.deep_linking import create_start_link, decode_payload
 from aiogram.dispatcher.router import Router
 from aiogram.filters import CommandStart, Command
-from aiogram.filters.callback_data import CallbackData
+from aiogram.exceptions import TelegramForbiddenError
 from aiogram.fsm.context import FSMContext
 import logging
 
@@ -138,9 +138,11 @@ async def get_message_to_send(message: Message, user: User, session: Session, st
 
     session.add(db_message)
     session.commit()
-    session.flush()
-
-    await db_message.send(bot=bot)
+    try:
+        await db_message.send(bot=bot)
+    except TelegramForbiddenError:
+        session.delete(receiver_user)
+        session.commit()
     await message.answer("✅ Сообщение успешно отправлено!")
     await state.clear()
 
