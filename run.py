@@ -11,14 +11,14 @@ async def start():
     # Конфиг из .env
     config = dotenv_values()
 
-    bot = Bot(token=config.get("TOKEN"))
+    bot = Bot(token=config.get("TOKEN"), parse_mode="HTML")
     dp = Dispatcher()
 
     # Инициализуем базу данных
-    setup_db(dp=dp, url=config.get("DB_URL"))
+    session_maker = await setup_db(url=config.get("DB_URL"))
 
     # Устанавливаем промежуточные приложения
-    register_middlewares(dp=dp)
+    register_middlewares(dp=dp, sessionmaker=session_maker)
 
     # Инициализируем роутеры, хендлеры
     register_routers(dp=dp)

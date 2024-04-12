@@ -1,40 +1,26 @@
 from .base import Base
-from sqlalchemy import Column, UUID, String, Integer, Boolean, DateTime, Text, ForeignKey
+from sqlalchemy import ForeignKey, Text
 import uuid
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship, Session, mapped_column, Mapped
 from aiogram import Bot
 from utils.prepare_content import prepare_response_text
 from keyboard.inline_kb import answer_keyboard
-
+from datetime import datetime
 
 class Message(Base):
 
     __tablename__ = "messages"
 
-    message_id = Column(UUID, primary_key=True, default=uuid.uuid4)
-    text = Column(Text, nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
 
-    sender_id = Column(ForeignKey("users.user_id"))
-    receiver_id = Column(ForeignKey("users.user_id"))
+    sender_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    receiver_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
 
-    sender = relationship("User", backref="sended_messages", foreign_keys=[sender_id])
-    receiver = relationship("User", backref="received_messages", foreign_keys=[receiver_id])
+    sender: Mapped["User"] = relationship(backref="sended_messages", foreign_keys=[sender_id], uselist=False, lazy="joined")
+    receiver: Mapped["User"] = relationship(backref="received_messages", foreign_keys=[receiver_id], uselist=False, lazy="joined")
 
-    async def send(self, bot: Bot):
+    async def send_message(self, bot: Bot):
         text = prepare_response_text(self.text, self.sender, self.receiver.is_admin)
-        await bot.send_message(chat_id=self.receiver.tg_user_id, text=text, parse_mode="HTML", reply_markup=answer_keyboard(self.message_id))
-    
-    async def answer(self, bot: Bot, text: str):
-
-        new_message = Message(
-            text = text,
-            receiver=self.sender,
-            sender=self.receiver,
-        )
-
-        await new_message.send(bot=bot)
-
-def get_message_by_id(session: Session, message_id: UUID) -> Message:
-    return session.query(Message).filter_by(message_id=message_id).first()
-
+        await bot.send_message(chat_id=self.receiver.tg_user_id, text=text, parse_mode="HTML", reply_markup=answer_keyboard(self.id, self.sender_id))
 

@@ -1,6 +1,6 @@
 from aiogram.dispatcher.router import Router
 from aiogram.types import Message, CallbackQuery
-from db.models.user import User, get_users
+from db.models.user import User
 from aiogram.filters import Command
 from filters.admin_filter import IsAdmin, NewsletterStart
 
@@ -15,10 +15,10 @@ from sqlalchemy.orm import Session
 from utils.send import send_message
 from utils.parse_buttons import parse_buttons
 
+
 class Newsletter(StatesGroup):
     text = State()
     buttons = State()
-
 
 async def newsletter_create(message: Message, user: User, state: FSMContext):
     await message.answer("Введите текст для рассылки: ", reply_markup=cancel_keyboard())

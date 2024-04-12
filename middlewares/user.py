@@ -1,7 +1,7 @@
 from typing import Any, Awaitable, Callable, Dict
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from aiogram.types import TelegramObject
-from db.models.user import get_user_or_create
+from db.models import User
 import logging
 
 class UserMiddleware(BaseMiddleware):
@@ -18,12 +18,7 @@ class UserMiddleware(BaseMiddleware):
         last_name = event.from_user.last_name
         
         # Ищем юзер, если не находим создаем...
-        user = get_user_or_create(session, 
-                tg_user_id=tg_id,
-                username=username,
-                first_name=first_name,
-                last_name=last_name
-            )
+        user = await User.objects.get_or_create(session, tg_user_id=tg_id, username=username, first_name=first_name, last_name=last_name)
         
         if user.username != username:
             user.username = username

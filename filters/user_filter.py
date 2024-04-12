@@ -5,10 +5,13 @@ class AnswerCallbackData(CallbackData, prefix="answer"):
     message_id: UUID
 
 class GetWhoIsCallbackData(CallbackData, prefix="whois"):
-    message_id: UUID
+    reciever_id: UUID
 
 class Cancel(CallbackData, prefix="cancel"):
     pass
 
 class Agree(CallbackData, prefix="agree"):
-    message_id: UUID
+    proposal_id: UUID
+
+class Decline(CallbackData, prefix="decline"):
+    proposal_id: UUID
