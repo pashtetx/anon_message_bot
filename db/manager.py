@@ -49,7 +49,7 @@ class Manager:
 
     async def all(self, session: AsyncSession):
         result = await session.execute(select(self.model))
-        return result.scalars()
+        return result.scalars().all()
         
     async def count(self, session: AsyncSession):
         result = await session.execute(select(func.count()).select_from(self.model))
