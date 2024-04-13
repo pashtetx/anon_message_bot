@@ -8,11 +8,16 @@ class Manager:
     
     def __init__(self, model):
         self.model = model
+        self.query = select(self.model)
     
     def parse_query(self, key: str, value: str):
         attr = getattr(self.model, key.split("__")[0])
         if key.endswith("__not"):
             return attr != value
+        elif key.endswith("__gt"):
+            return attr > value
+        elif key.endswith("__lw"):
+            return attr < value
         else:
             return attr == value
     
@@ -35,14 +40,16 @@ class Manager:
         return scalar
     
     
-    async def filter(self):
-        pass
+    def filter(self, **kw):
+        self.query = self.query.where(*self.parse_kwargs(**kw))
+        return self
     
     async def first(self):
         pass
 
-    async def all(self):
-        pass
+    async def all(self, session: AsyncSession):
+        result = await session.execute(select(self.model))
+        return result.scalars()
         
     async def count(self, session: AsyncSession):
         result = await session.execute(select(func.count()).select_from(self.model))
