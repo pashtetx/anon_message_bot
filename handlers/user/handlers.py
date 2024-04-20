@@ -132,8 +132,8 @@ async def get_message_to_send(message: TelegramMessage, user: User, session: Ses
             if action == "send" or action == "answer":
                 break
             elif action == "random":
-                session.delete(orm_message)
-                session.delete(receiver_user)
+                await session.delete(orm_message)
+                await session.delete(receiver_user)
                 receiver_user = await User.objects.random(session, id__not=user.id)
                 orm_message = Message(text=message.text or message.caption, receiver=receiver_user, sender=user)
                 await orm_message.save(session)
@@ -144,7 +144,6 @@ async def get_message_to_send(message: TelegramMessage, user: User, session: Ses
 async def cancel_callbackquery(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.answer()
-    await callback.message.delete()
     
 async def whois_callbackquery(callback: CallbackQuery, callback_data: GetWhoIsCallbackData, session: Session, bot: Bot):
     sender = await User.objects.get(session, tg_user_id=callback.from_user.id)
